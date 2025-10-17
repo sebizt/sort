@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>정렬 시각화 (삽입/버블) 비교·교환 로그</title>
+<style>
+  body { font-family: 'Noto Sans KR', sans-serif; background:#f8fafc; color:#111; margin:0; padding:20px; }
+  h1 { text-align:center; }
+  input, button, select { padding:8px 12px; font-size:14px; }
+  table { border-collapse:collapse; width:100%; margin-top:20px; }
+  th, td { border:1px solid #ccc; padding:6px 8px; text-align:center; }
+  th { background:#e2e8f0; position:sticky; top:0; }
+  tr:nth-child(even) { background:#f1f5f9; }
+  .highlight { background:#facc15; }
+  .swap { color:#16a34a; font-weight:bold; }
+  .noswap { color:#6b7280; }
+  #totals { margin-top:20px; font-weight:bold; }
+</style>
+</head>
+<body>
+  <h1>정렬 시각화 (삽입 / 버블) 비교·교환 로그</h1>
+  <div>
+    <label>숫자 입력 (공백, 콤마 가능): </label>
+    <input id="nums" value="50 23 9 18 61 32" style="width:300px" />
+    <label>알고리즘: </label>
+    <select id="algo">
+      <option value="insertion">삽입 정렬</option>
+      <option value="bubble">버블 정렬</option>
+    </select>
+    <button onclick="run()">실행</button>
+  </div>
+  <div id="totals"></div>
+  <table id="logTable">
+    <thead>
+      <tr><th>배열 상태</th><th>비교/교환 로그</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+<script>
+function parseNumbers(str){
+  return str.split(/[ ,\t\n]+/).filter(Boolean).map(Number);
+}
+
+function buildInsertionSteps(arr){
+  arr = arr.slice();
+  const steps=[];
+  let compare=0, swap=0;
+  for(let i=1;i<arr.length;i++){
+    let j=i-1;
+    while(j>=0){
+      compare++;
+      const a=arr[j], b=arr[j+1];
+      const snapshot=arr.slice();
+      if(a>b){
+        [arr[j],arr[j+1]]=[arr[j+1],arr[j]];
+        swap++;
+        steps.push({arr:snapshot, compared:[j,j+1], swapped:true, note:`${a}, ${b} 비교 → 교환`});
+        j--;
+      }else{
+        steps.push({arr:snapshot, compared:[j,j+1], swapped:false, note:`${a}, ${b} 비교 → x`});
+        break;
+      }
+    }
+  }
+  return {steps, compare, swap};
+}
+
+function buildBubbleSteps(arr){
+  arr = arr.slice();
+  const steps=[];
+  let compare=0, swap=0;
+  for(let i=0;i<arr.length-1;i++){
+    for(let j=0;j<arr.length-1-i;j++){
+      compare++;
+      const a=arr[j], b=arr[j+1];
+      const snapshot=arr.slice();
+      if(a>b){
+        [arr[j],arr[j+1]]=[arr[j+1],arr[j]];
+        swap++;
+        steps.push({arr:snapshot, compared:[j,j+1], swapped:true, note:`${a}, ${b} 비교 → 교환`});
+      } else {
+        steps.push({arr:snapshot, compared:[j,j+1], swapped:false, note:`${a}, ${b} 비교 → x`});
+      }
+    }
+  }
+  return {steps, compare, swap};
+}
+
+function renderSteps(steps){
+  const tbody=document.querySelector('#logTable tbody');
+  tbody.innerHTML='';
+  steps.forEach((s,i)=>{
+    const tr=document.createElement('tr');
+    const td1=document.createElement('td');
+    td1.innerHTML=s.arr.map((v,idx)=>{
+      const hl=(idx===s.compared[0]||idx===s.compared[1])?`<span class='highlight'>${v}</span>`:v;
+      return hl;
+    }).join(' ');
+    const td2=document.createElement('td');
+    td2.innerHTML=`${i+1}단계: <span class='${s.swapped?"swap":"noswap"}'>${s.note}</span>`;
+    tr.append(td1,td2);
+    tbody.appendChild(tr);
+  });
+}
+
+function run(){
+  const nums=parseNumbers(document.getElementById('nums').value);
+  const algo=document.getElementById('algo').value;
+  const result= algo==='bubble' ? buildBubbleSteps(nums) : buildInsertionSteps(nums);
+  renderSteps(result.steps);
+  const name = algo==='bubble' ? '버블 정렬' : '삽입 정렬';
+  document.getElementById('totals').innerText=`[${name}] 총 비교: ${result.compare}회, 총 교환: ${result.swap}회`;
+}
+</script>
+</body>
+</html>
